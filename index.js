@@ -1,12 +1,14 @@
 import express from "express";
-import quiz_router from "./routes/question_router.js";
+import questionRouter from "./routes/router.js";
+import { topicsRouter } from "./routes/router.js";
 
 const app = express();
 
 const PORT = 3000;
 
 app.use(express.json());
-app.use('/get-question', quiz_router);
+app.use('/get-question', questionRouter);
+app.use('/get-topics', topicsRouter);
 
 app.get('/', (req, res)=>{
     res.status(200);
