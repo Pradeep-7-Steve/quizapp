@@ -37,6 +37,6 @@ async function getValidTopics(topic) {
 }
 
 const genAI = new GoogleGenerativeAI("AIzaSyB6cPDFKr1kZqMsWa9pg3BRAcFSzUJk_pM");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
 export default getValidTopics

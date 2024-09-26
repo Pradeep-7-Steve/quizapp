@@ -1,6 +1,19 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-function getQuizJsonPrompt(questionPrompt, subtopic, skills, difficulty) {
+async function getQuestionPrompt(topic, subtopic, difficulty) {
+    return await getResponseDelayedPrompt(`
+        create a prompt to generate question description from ${subtopic} in <topic>${topic}</topic> :
+
+        the objective is to genereate a valid and challeging question which helps the test takers to improve their skills and learn.
+        make sure the prompt's goal is to find a suitable type of question (define the exact structure of the question description as well) to evaluate a student's profeciency in the {topic}
+        the prompt should also contain an example as well.
+         make the prompt understand the difficulty level : '${difficulty}' and creatively make the question '${difficulty}'
+    higher difficulty questions should mean the questions are more verbose.
+    it should take the test takers more time to solve if the difficulty is high.`
+    )
+}
+
+function getQuizJsonPrompt(topic, questionPrompt, subtopic, skills, difficulty) {
     return `
       ${questionPrompt}
 
@@ -11,25 +24,62 @@ function getQuizJsonPrompt(questionPrompt, subtopic, skills, difficulty) {
       <skills>
       ${skills}
       </skills>
-
+      
       difficulty level : '${difficulty}' and creatively make the question '${difficulty}'
-    higher difficulty questions should mean the questions are more verbose.
-    it should take the test takers more time to solve if the difficulty is high.
+      higher difficulty questions should mean the questions are more verbose.
+      it should take the test takers more time to solve if the difficulty is high.
+      
+      <reasoning>
+           The question belongs to the subtopic '${subtopic}' about <topic>'${topic}'</topic> . Give detailed explanation why the answer is correct.
+           solve it step by step and teach the test takers.
+  
+      If there are additional context available on the question description or the topic, provide them as well.
+      The content should be useful for a student to learn and apply the same content for answering similar questions.
+  
+      </reasoning>
+
+    <option and correct options>
+        after doing the reasoning based on the final calculation, create 4 options and a correct option.
+        verify the correctness of the options. the correct option should be exact not closest.
+    </option and correct options>
 
     ` + `
       Output:
-      give python
+      give valid json
       {
             "question":question_description,
-            "options":[option1,option2,option3,option4],
-            "correct_option":("A" or "B" or "C" or "D"),
+            "difficulty":("easy" or "medium" or "hard"),
             "reasoning":reasoning
       }
-    give python output
     `;
 }
 
-async function getResponseDelayedPrompt(prompt, delay=1000) {
+async function addOptionsToJson(question) {
+    return await getResponseDelayedPrompt(
+        `Output:
+        <question>
+        ${question["question"]}
+        <question>
+        <reasoning>
+      ${question["reasoning"]}
+        </reasoning>
+
+        identify the correct option from the reasoning and 
+      create 4 options and a correct option.
+      verify the correctness of the options. the correct option should be exact not closest.
+      give valid json
+      {
+           "options":[
+                option1,
+                option2,
+                option3,
+                option4]
+           "correct_option":("A" or "B" or "C" or "D")
+      }`
+    );
+}
+
+async function getResponseDelayedPrompt(prompt, delay = 1000) {
     await new Promise((resolve) => setTimeout(resolve, delay));
     try {
         const rawResponse = await model.generateContent([prompt]);
@@ -47,26 +97,47 @@ async function getResponseDelayedPrompt(prompt, delay=1000) {
 function jsonParse(text) {
     var start = text.indexOf("{");
     var end = text.lastIndexOf("}");
-    text = text.substring(start, end+1);
+    text = text.substring(start, end + 1);
     const json = JSON.parse(text);
     return json;
 }
 
-export default async function getValidQuizJson(questionPrompt, subtopic, skills, difficulty) {
-    const quizJsonPrompt = getQuizJsonPrompt(questionPrompt, subtopic, skills, difficulty);
-    var quizJsonResponse = await getResponseDelayedPrompt(quizJsonPrompt);
+function notValidQuizJson(quizJson) {
+    return !quizJson.hasOwnProperty("question") || !quizJson.hasOwnProperty("difficulty") || !quizJson.hasOwnProperty("reasoning") || !quizJson.hasOwnProperty("options") || !quizJson.hasOwnProperty("correct_option");
+}
+
+export default async function getValidQuizJsonRecursive(topic, subtopic, difficulty, cnt = 0) {
+    const skills = "";
+    const questionPrompt = await getQuestionPrompt(topic, subtopic, difficulty);
+    const quizJsonPrompt = getQuizJsonPrompt(topic, questionPrompt, subtopic, skills, difficulty);
 
     try {
-        return jsonParse(quizJsonResponse);
+        var quizJsonResponseWithoutOptions = await getResponseDelayedPrompt(quizJsonPrompt);
+        var quizJson = jsonParse(quizJsonResponseWithoutOptions);
+        var quizJsonResponse = await addOptionsToJson(quizJson);
+        var optionsJson = jsonParse(quizJsonResponse);
+        quizJson["options"] = optionsJson["options"];
+        quizJson["correct_option"] = optionsJson["correct_option"];
+
+        if (notValidQuizJson(quizJson)) {
+            throw new Error("quizJson is not valid");
+        }
+
+        return quizJson
     } catch (error) {
-        console.log(error);
+
+        if (cnt > 2 || error.constructor.name === "ResourceExhausted") {
+            return {}
+        }
+        console.log("no. of recursive calls :" + cnt);
+        console.log("question error:", error);
         await new Promise(resolve => setTimeout(resolve, 1000));
-        return await getValidQuizJson(questionPrompt, subtopic, skills, difficulty);
+        return await getValidQuizJsonRecursive(topic, subtopic, difficulty, cnt + 1);
     }
 }
 
 
-export async function geminiCall(){
+export async function geminiCall() {
 
     const prompt = "give me 5 neet questions";
     const result = await model.generateContent([prompt]);
