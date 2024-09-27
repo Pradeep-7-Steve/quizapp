@@ -1,9 +1,10 @@
 import express from "express";
+import cors from 'cors';
 import questionRouter from "./routes/router.js";
 import { topicsRouter } from "./routes/router.js";
 
 const app = express();
-
+app.use(cors());
 const PORT = 3000;
 
 app.use(express.json());
