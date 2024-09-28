@@ -66,7 +66,12 @@ async function addOptionsToJson(question) {
 
         identify the correct option from the reasoning and 
       create 4 options and a correct option.
-      verify the correctness of the options. the correct option should be exact not closest.
+      verify the correctness of the options.
+
+      <rules>
+      options should directly answer the question asked. usually one word or number maybe followed by a unit.
+      </rules>
+      
       give valid json
       {
            "options":[
@@ -102,8 +107,9 @@ function jsonParse(text) {
     return json;
 }
 
-function notValidQuizJson(quizJson) {
-    return !quizJson.hasOwnProperty("question") || !quizJson.hasOwnProperty("difficulty") || !quizJson.hasOwnProperty("reasoning") || !quizJson.hasOwnProperty("options") || !quizJson.hasOwnProperty("correct_option");
+function validQuizJson(quizJson) {
+    return quizJson.hasOwnProperty("question") || quizJson.hasOwnProperty("difficulty") || quizJson.hasOwnProperty("reasoning") || quizJson.hasOwnProperty("options") || quizJson.hasOwnProperty("correct_option") ||
+    quizJson["options"].length == 4 || quizJson["correct_option"] === "A" || quizJson["correct_option"] === "B" || quizJson["correct_option"] === "C" || quizJson["correct_option"] === "D";
 }
 
 export default async function getValidQuizJsonRecursive(topic, subtopic, difficulty, cnt = 0) {
@@ -119,7 +125,7 @@ export default async function getValidQuizJsonRecursive(topic, subtopic, difficu
         quizJson["options"] = optionsJson["options"];
         quizJson["correct_option"] = optionsJson["correct_option"];
 
-        if (notValidQuizJson(quizJson)) {
+        if (!validQuizJson(quizJson)) {
             throw new Error("quizJson is not valid");
         }
 

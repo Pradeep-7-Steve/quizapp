@@ -5,8 +5,8 @@ export const getQuestion = async (req, res) => {
     res.status(200);   
     res.json(await getValidQuizJsonRecursive(
         "Aptitude",
-        "Time and Distance",
-        "hard"
+        "Profit and Loss",
+        "easy"
     ));
 }
 
