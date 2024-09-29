@@ -4,13 +4,12 @@ import getValidTopics from "../gemini/fetchTopics.js";
 export const getQuestion = async (req, res) => {
     res.status(200);   
     res.json(await getValidQuizJsonRecursive(
-        "Aptitude",
-        "Profit and Loss",
-        "easy"
+        req.query.topic,
+        req.query.subtopic,
+        req.query.difficulty,
     ));
 }
 
-export const getTopics = async (req, res) => {
-    res.status(200);   
-    res.json(await getValidTopics("Logical Reasoning"));
+export const getTopics = async (topic) => {
+    return await getValidTopics(topic);
 }
