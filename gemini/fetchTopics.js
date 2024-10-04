@@ -6,8 +6,8 @@ async function getTopics(topic) {
     const result =await model.generateContent([`Task:
 
         i want to learn ${topic},
-        create 25 subtopics so that i will be able to answer any ${topic} questions under this topic,
-        give the 25 subtopics as a python list
+        create 5 subtopics so that i will be able to answer any ${topic} questions under this topic,
+        give the 5 subtopics as a python list
 
         ensure it is a valid json:
 
