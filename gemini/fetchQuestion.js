@@ -63,7 +63,8 @@ async function getReasoningWithCorrectOptions(question) {
         3. **Reasoning for the Correct Option**: Once you have identified the correct answer, explain why it is the most accurate based on the question. there can be more than one potential correct answer.
         Ensure that your explanation includes why you are performing each step, what concepts are being applied, and how the solution progresses logically.
 Finally, conclude by summarizing what the test taker should learn from this problem.
-        4. **Final Answer**: State the correct option in terms of (A, B, C, D).
+
+        4. **Correct Options**: State the correct options in terms of (A, B, C, D).
 
         Provide a detailed step-by-step reasoning process for selecting the correct answer.
 
@@ -129,10 +130,11 @@ async function addOptionsToJson(question) {
     );
 }
 
-async function getResponseDelayedPrompt(prompt, delay = 1000) {
+async function getResponseDelayedPrompt(prompt, delay = 50) {
     await new Promise((resolve) => setTimeout(resolve, delay));
     try {
-        const rawResponse = await model.generateContent([prompt]);
+        const rawResponse = await models[API_KEY_index].generateContent([prompt]);
+        API_KEY_index = (API_KEY_index + 1) % models.length;
         return rawResponse.response.text();
     } catch (error) {
         if (error.constructor.name === "ResourceExhausted") {
@@ -259,5 +261,21 @@ export async function geminiCall() {
 
     return result.response.text();
 }
-const genAI = new GoogleGenerativeAI("AIzaSyDQm3qK6cnTuhi381GtwaRPAnQIg5TfWyg");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const API_KEYs = [
+    "AIzaSyC6F0-bUwVhQt-19g2yIru70SnPjgK8aPE",
+    "AIzaSyCgGCS5PuH_cP8UULH3598NmLZc8weFX2I",
+    "AIzaSyDQm3qK6cnTuhi381GtwaRPAnQIg5TfWyg",
+    "AIzaSyB6cPDFKr1kZqMsWa9pg3BRAcFSzUJk_pM",
+    "AIzaSyA6sj3Nu0xa_ZvqkaE__i2tafTRcZcI3Eg"
+]
+var models = []
+var genAIs = []
+var API_KEY_index = 0;
+for(let i = 0; i < API_KEYs.length; i++)
+{
+    const genAI = new GoogleGenerativeAI(API_KEYs[i]);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    models.push(model);
+    genAIs.push(genAI);
+}
