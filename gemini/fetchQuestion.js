@@ -264,7 +264,6 @@ export async function geminiCall() {
 const API_KEYs = [
     "AIzaSyC6F0-bUwVhQt-19g2yIru70SnPjgK8aPE",
     "AIzaSyCgGCS5PuH_cP8UULH3598NmLZc8weFX2I",
-    "AIzaSyDQm3qK6cnTuhi381GtwaRPAnQIg5TfWyg",
     "AIzaSyB6cPDFKr1kZqMsWa9pg3BRAcFSzUJk_pM",
     "AIzaSyA6sj3Nu0xa_ZvqkaE__i2tafTRcZcI3Eg"
 ]
